@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -353,7 +352,6 @@ let _lastGeneratedPhone = '';
 let allStudents = [];
 let allQuestions = [];
 let allCourses = [];
-  let allCourses = [];
 
 // ══ DEFAULT COURSES ══
 const defaultCourses = [
@@ -369,7 +367,6 @@ const defaultCourses = [
   { icon: '🌍', name: 'Economics' }
 ];
 
-let _bulkParsed = [];
 let _bulkParsed = [];
 let _adminMsgs = {};
 let _longPressTimer = null;
@@ -652,7 +649,8 @@ function updateCourseSelects() {
   const bulkSel = document.getElementById('bulk-subject');
   
   if(sel) sel.innerHTML = opts;
-    if(sel) sel.innerHTML = opts;
+  if(filterSel) filterSel.innerHTML = filterOpts;
+if(bulkSel) bulkSel.innerHTML = opts;
   const massDelSel = document.getElementById('mass-delete-subject');
   if(massDelSel) massDelSel.innerHTML = opts;
 }
