@@ -796,49 +796,61 @@ function loadQuestions() {
     renderQuestions(allQuestions);
   });
 }
-
-// ══ MASS DELETE QUESTIONS FOR A COURSE ══
-
 function deleteAllQuestionsInCourse(courseName) {
-  const courseQuestions = allQuestions.filter(q => q.subject === courseName);
-  
-  if (courseQuestions.length === 0) {
-    toast('No questions found in this course');
-    return;
-  }
-  
-  if (!confirm(`🗑️ Delete ALL ${courseQuestions.length} questions from "${courseName}"?\n\nThis action CANNOT be undone.`)) {
-    return;
-  }
-  
-  const btn = event.target;
-  const originalText = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = 'Deleting...';
-  
-  const updates = {};
-  courseQuestions.forEach(q => {
-    updates['questions/' + q.id] = null;
-  });
-  
-  db.ref().update(updates)
-    .then(() => {
-      toast(`✅ Deleted ${courseQuestions.length} questions`);
-      loadStats();
-      allQuestions = allQuestions.filter(q => q.subject !== courseName);
-      filterQuestions(document.getElementById('q-filter').value);
-    })
-    .catch(e => {
-      toast('❌ Error: ' + e.message);
-    })
-    .finally(() => {
-      btn.disabled = false;
-      btn.textContent = originalText;
+  // 🔥 FIX: Query Firebase directly instead of using stale allQuestions
+  db.ref('questions').once('value').then(snap => {
+    const freshQuestions = [];
+    snap.forEach(child => {
+      freshQuestions.push({id: child.key, ...child.val()});
     });
+    
+    const courseQuestions = freshQuestions.filter(q => q.subject === courseName);
+    
+    if (courseQuestions.length === 0) {
+      toast('No questions found in this course');
+      return;
+    }
+    
+    if (!confirm(`🗑️ Delete ALL ${courseQuestions.length} questions from "${courseName}"?\n\nThis action CANNOT be undone.`)) {
+      return;
+    }
+    
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Deleting...';
+    
+    const updates = {};
+    courseQuestions.forEach(q => {
+      updates['questions/' + q.id] = null;
+    });
+    
+    db.ref().update(updates)
+      .then(() => {
+        toast(`✅ Deleted ${courseQuestions.length} questions`);
+        loadStats();
+        allQuestions = allQuestions.filter(q => q.subject !== courseName);
+        filterQuestions(document.getElementById('q-filter').value);
+      })
+      .catch(e => {
+        toast('❌ Error: ' + e.message);
+      })
+      .finally(() => {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      });
+  });
 }
 
 async function deleteAllQuestionsSequential(courseName) {
-  const courseQuestions = allQuestions.filter(q => q.subject === courseName);
+  // 🔥 FIX: Query Firebase directly instead of using stale allQuestions
+  const snap = await db.ref('questions').once('value');
+  const freshQuestions = [];
+  snap.forEach(child => {
+    freshQuestions.push({id: child.key, ...child.val()});
+  });
+  
+  const courseQuestions = freshQuestions.filter(q => q.subject === courseName);
   
   if (courseQuestions.length === 0) {
     toast('No questions found');
