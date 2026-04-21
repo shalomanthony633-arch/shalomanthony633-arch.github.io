@@ -168,6 +168,7 @@ select.field{appearance:none;-webkit-appearance:none;background-image:url("data:
   input,textarea,select{font-size:16px}
 }
 </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -355,10 +356,7 @@ let allCourses = [];
 
   // ══ DEFAULT COURSES ══
   const defaultCourses = [
-  { icon: '📈', name: 'Principles of Economics' },
-  { icon: '🏛️', name: 'Citizenship Education' },
-  { icon: '💼', name: 'Introduction to Business' },
-  { icon: '📢', name: 'Fundamentals of Marketing' }
+  { icon: '🏛️', name: 'Citizenship Education' }
 ];
 
 let _bulkParsed = [];
@@ -371,6 +369,8 @@ let studentsListener = null;
 let coursesListener = null;
 let questionsListener = null;
 let chatListener = null;
+let statsListener = null;
+let questionsCountListener = null;
 
 // ══ AUTHENTICATION ══
 function pinCheck() {
@@ -905,26 +905,23 @@ function deleteQ(id) {
   }).catch(e => toast('Error: ' + e.message));
 }
 
-// ══ REAL-TIME STATS (Auto-refresh every 10 seconds) ══
-let statsInterval = null;
+// ══ REAL-TIME STATS (Instant Firebase sync) ══
+let statsListener = null;
+let questionsCountListener = null;
 
 function loadStats() {
-  // Initial load
-  updateStats();
-  
-  // Auto-refresh every 10 seconds
-  if(statsInterval) clearInterval(statsInterval);
-  statsInterval = setInterval(updateStats, 10000);
-}
+  // Stop old listeners
+  if(statsListener) { statsListener.off(); statsListener = null; }
+  if(questionsCountListener) { questionsCountListener.off(); questionsCountListener = null; }
 
-function updateStats() {
-  // Count Paystack payments only (paidViaPaystack = true)
-  db.ref('keys').once('value').then(snap => {
+  // Real-time keys listener — updates instantly when any student data changes
+  statsListener = db.ref('keys');
+  statsListener.on('value', snap => {
     let total=0, active=0, revenue=0;
     snap.forEach(child => {
       const d = child.val();
-      // Only count Paystack payments, not manually generated keys
-      if(d.paidViaPaystack === true) {
+      // Only count REAL Paystack payments (not demo, owner, or test data)
+      if(isRealPayment(d)) {
         total++;
         if(d.active!==false) active++;
         if(d.plan==='semester') revenue+=1500;
@@ -936,17 +933,17 @@ function updateStats() {
     document.getElementById('st-revenue').textContent = revenue.toLocaleString();
     document.getElementById('admin-stats-top').textContent = `${active} active · ₦${revenue.toLocaleString()} earned`;
   });
-  
-  db.ref('questions').once('value').then(snap => {
+
+  // Real-time questions count
+  questionsCountListener = db.ref('questions');
+  questionsCountListener.on('value', snap => {
     document.getElementById('st-questions').textContent = snap.numChildren();
   });
 }
 
 function stopStatsRefresh() {
-  if(statsInterval) {
-    clearInterval(statsInterval);
-    statsInterval = null;
-  }
+  if(statsListener) { statsListener.off(); statsListener = null; }
+  if(questionsCountListener) { questionsCountListener.off(); questionsCountListener = null; }
 }
 
 // ══ BULK IMPORT ══
@@ -1285,7 +1282,8 @@ function stopAllListeners() {
   if(coursesListener) { coursesListener.off(); coursesListener = null; }
   if(questionsListener) { questionsListener.off(); questionsListener = null; }
   if(chatListener) { chatListener.off(); chatListener = null; }
-  stopStatsRefresh();
+  if(statsListener) { statsListener.off(); statsListener = null; }
+  if(questionsCountListener) { questionsCountListener.off(); questionsCountListener = null; }
 }
 
 // ══ TOAST ══
