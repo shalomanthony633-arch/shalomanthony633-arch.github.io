@@ -168,7 +168,6 @@ select.field{appearance:none;-webkit-appearance:none;background-image:url("data:
   input,textarea,select{font-size:16px}
 }
 </style>
-<base target="_blank">
 </head>
 <body>
 
@@ -356,7 +355,10 @@ let allCourses = [];
 
   // ══ DEFAULT COURSES ══
   const defaultCourses = [
-  { icon: '🏛️', name: 'Citizenship Education' }
+  { icon: '📈', name: 'Principles of Economics' },
+  { icon: '🏛️', name: 'Citizenship Education' },
+  { icon: '💼', name: 'Introduction to Business' },
+  { icon: '📢', name: 'Fundamentals of Marketing' }
 ];
 
 let _bulkParsed = [];
@@ -369,8 +371,6 @@ let studentsListener = null;
 let coursesListener = null;
 let questionsListener = null;
 let chatListener = null;
-let statsListener = null;
-let questionsCountListener = null;
 
 // ══ AUTHENTICATION ══
 function pinCheck() {
@@ -905,23 +905,26 @@ function deleteQ(id) {
   }).catch(e => toast('Error: ' + e.message));
 }
 
-// ══ REAL-TIME STATS (Instant Firebase sync) ══
-let statsListener = null;
-let questionsCountListener = null;
+// ══ REAL-TIME STATS (Auto-refresh every 10 seconds) ══
+let statsInterval = null;
 
 function loadStats() {
-  // Stop old listeners
-  if(statsListener) { statsListener.off(); statsListener = null; }
-  if(questionsCountListener) { questionsCountListener.off(); questionsCountListener = null; }
+  // Initial load
+  updateStats();
+  
+  // Auto-refresh every 10 seconds
+  if(statsInterval) clearInterval(statsInterval);
+  statsInterval = setInterval(updateStats, 10000);
+}
 
-  // Real-time keys listener — updates instantly when any student data changes
-  statsListener = db.ref('keys');
-  statsListener.on('value', snap => {
+function updateStats() {
+  // Count Paystack payments only (paidViaPaystack = true)
+  db.ref('keys').once('value').then(snap => {
     let total=0, active=0, revenue=0;
     snap.forEach(child => {
       const d = child.val();
-      // Only count REAL Paystack payments (not demo, owner, or test data)
-      if(isRealPayment(d)) {
+      // Only count Paystack payments, not manually generated keys
+      if(d.paidViaPaystack === true) {
         total++;
         if(d.active!==false) active++;
         if(d.plan==='semester') revenue+=1500;
@@ -933,17 +936,17 @@ function loadStats() {
     document.getElementById('st-revenue').textContent = revenue.toLocaleString();
     document.getElementById('admin-stats-top').textContent = `${active} active · ₦${revenue.toLocaleString()} earned`;
   });
-
-  // Real-time questions count
-  questionsCountListener = db.ref('questions');
-  questionsCountListener.on('value', snap => {
+  
+  db.ref('questions').once('value').then(snap => {
     document.getElementById('st-questions').textContent = snap.numChildren();
   });
 }
 
 function stopStatsRefresh() {
-  if(statsListener) { statsListener.off(); statsListener = null; }
-  if(questionsCountListener) { questionsCountListener.off(); questionsCountListener = null; }
+  if(statsInterval) {
+    clearInterval(statsInterval);
+    statsInterval = null;
+  }
 }
 
 // ══ BULK IMPORT ══
@@ -1282,8 +1285,7 @@ function stopAllListeners() {
   if(coursesListener) { coursesListener.off(); coursesListener = null; }
   if(questionsListener) { questionsListener.off(); questionsListener = null; }
   if(chatListener) { chatListener.off(); chatListener = null; }
-  if(statsListener) { statsListener.off(); statsListener = null; }
-  if(questionsCountListener) { questionsCountListener.off(); questionsCountListener = null; }
+  stopStatsRefresh();
 }
 
 // ══ TOAST ══
