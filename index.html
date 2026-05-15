@@ -196,11 +196,11 @@ select.field{appearance:none;-webkit-appearance:none;background-image:url("data:
     <span class="login-icon" style="font-size:32px;margin-bottom:8px">⚡</span>
     <div class="login-title">Admin Panel</div>
     <div class="login-sub">Staff only — keep this link private</div>
-    <input type="password" id="pw-input" placeholder="Enter password"
+    <input type="password" id="pw-input" placeholder="Enter password" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
       style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:14px 16px;font-size:15px;font-family:'DM Sans',sans-serif;color:#fff;outline:none;margin-bottom:12px;text-align:center;-webkit-appearance:none"
       onkeydown="if(event.key==='Enter')pinCheck()">
     <button class="pin-btn" onclick="pinCheck()">🔐 Enter Admin</button>
-    <button class="finger-btn" onclick="tryFingerprint()" id="finger-btn" style="display:none">
+    <button class="finger-btn" onclick="tryFingerprint()" id="finger-btn">
       <span>👆</span><span id="finger-btn-text">Unlock with Fingerprint</span>
     </button>
     <div class="pin-err" id="pin-err"></div>
@@ -495,9 +495,9 @@ function updateFingerprintButton(){
   if(span) span.textContent = hasCred ? 'Unlock with Fingerprint' : 'Register Fingerprint';
 }
 
-if(window.PublicKeyCredential&&window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable){
-  PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(a=>{if(a){document.getElementById('finger-btn').style.display='flex';updateFingerprintButton();}});
-}
+// Fingerprint button always shown
+updateFingerprintButton();
+
 
 // ══ TABS ══
 function switchTab(name, btn) {
