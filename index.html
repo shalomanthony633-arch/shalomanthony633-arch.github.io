@@ -212,6 +212,7 @@ select.field{appearance:none;-webkit-appearance:none;background-image:url("data:
   input,textarea,select{font-size:16px}
 }
 </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -227,7 +228,7 @@ select.field{appearance:none;-webkit-appearance:none;background-image:url("data:
       style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:14px 16px;font-size:15px;font-family:'DM Sans',sans-serif;color:#fff;outline:none;margin-bottom:12px;text-align:center;-webkit-appearance:none"
       onkeydown="if(event.key==='Enter')pinCheck()">
     <button class="pin-btn" onclick="pinCheck()">🔐 Enter Admin</button>
-    <button class="finger-btn" onclick="tryFingerprint()" id="finger-btn" style="display:none">
+    <button class="finger-btn" onclick="tryFingerprint()" id="finger-btn">
       <span class="finger-icon">👆</span>
       <span>Unlock with Fingerprint</span>
     </button>
@@ -396,7 +397,7 @@ Q2. What is depreciation?
       <!-- Photo mode -->
       <div id="ai-photo-mode" style="display:none">
         <div class="photo-upload-zone" id="photo-drop-zone">
-          <input type="file" id="ai-photo-input" accept="image/*" capture="environment" onchange="handlePhotoUpload(this)">
+          <input type="file" id="ai-photo-input" accept="image/*" onchange="handlePhotoUpload(this)">
           <span class="photo-upload-icon">📸</span>
           <div class="photo-upload-text">Tap to snap or upload photo of your notes<br><span style="font-size:11px;opacity:0.6">JPEG, PNG, WEBP supported</span></div>
         </div>
@@ -601,13 +602,19 @@ async function authenticateFingerprint() {
   }
 }
 
-// Check fingerprint availability
+// Check fingerprint availability - button always visible, shows register or unlock text
 if (window.PublicKeyCredential && window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
   PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(available => {
-    if (available) {
-      document.getElementById('finger-btn').style.display = 'flex';
-    }
+    updateFingerprintButton();
+  }).catch(() => {
+    // Fingerprint not supported on this device, hide button
+    const btn = document.getElementById('finger-btn');
+    if(btn) btn.style.display = 'none';
   });
+} else {
+  // WebAuthn not supported at all, hide button
+  const btn = document.getElementById('finger-btn');
+  if(btn) btn.style.display = 'none';
 }
 
 // ══ TABS ══
