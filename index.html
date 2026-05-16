@@ -1161,11 +1161,6 @@ function setAiStep(msg){
 }
 
 async function generateWithAI(){
-  if(!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_KEY_HERE'){
-    toast('⚠️ Gemini API key not configured');
-    return;
-  }
-
   const subj = document.getElementById('ai-subject').value;
   if(!subj){ toast('Select a course first'); return; }
 
@@ -1183,88 +1178,49 @@ async function generateWithAI(){
   document.getElementById('ai-generating-card').style.display = 'block';
   document.getElementById('ai-results-section').style.display = 'none';
   document.getElementById('ai-gen-btn').disabled = true;
-  setAiStep('Connecting to Gemini...');
+  setAiStep('Connecting to AI server...');
 
   try {
-    let contents;
+    let response, data;
 
     if(_aiCurrentMode === 'text'){
       const notes = document.getElementById('ai-notes-input').value.trim();
-      const prompt = `You are an exam question generator for Nigerian university students. Generate exactly ${count} multiple choice questions based on these lecture notes for the course "${subj}".
 
-STRICT RULES:
-- Generate exactly ${count} questions
-- Each question must have exactly 4 options (A, B, C, D)
-- Distribute correct answers evenly across A, B, C, D
-- Include a brief explanation for each correct answer
-- Base questions ONLY on the provided notes
-
-Respond with ONLY a JSON array, no markdown, no backticks, no extra text:
-[
-  {
-    "q": "question text",
-    "options": ["option A", "option B", "option C", "option D"],
-    "answer": 0,
-    "explanation": "brief explanation"
-  }
-]
-(answer is 0-indexed: 0=A, 1=B, 2=C, 3=D)
-
-LECTURE NOTES:
-${notes}`;
-
-      contents = [{ role: 'user', parts: [{ text: prompt }] }];
-
-    } else {
-      const prompt = `Read the notes in this image and generate exactly ${count} multiple choice questions for the course "${subj}". STRICT: 4 options each, even answer distribution, brief explanations. Output ONLY a JSON array.`;
-
-      contents = [{ 
-        role: 'user', 
-        parts: [
-          { inline_data: { mime_type: _aiPhotoMime, data: _aiPhotoBase64 } },
-          { text: prompt }
-        ] 
-      }];
-    }
-
-    setAiStep('Generating with Gemini...');
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
+      setAiStep('Generating questions...');
+      response = await fetch(`${AI_BACKEND_URL}/api/generate-text`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: contents,
-          generationConfig: { maxOutputTokens: 8192, temperature: 0.4 }
-        })
-      }
-    );
+        body: JSON.stringify({ subject: subj, count: count, notes: notes })
+      });
+
+    } else {
+      // Photo mode - send as multipart form data
+      const blob = await fetch(`data:${_aiPhotoMime};base64,${_aiPhotoBase64}`).then(r => r.blob());
+      const formData = new FormData();
+      formData.append('photo', blob, 'notes.jpg');
+      formData.append('subject', subj);
+      formData.append('count', count);
+
+      setAiStep('Analyzing photo...');
+      response = await fetch(`${AI_BACKEND_URL}/api/generate-photo`, {
+        method: 'POST',
+        body: formData
+      });
+    }
 
     if(!response.ok){
       const err = await response.json().catch(() => ({}));
-      throw new Error(err.error?.message || `API error: ${response.status}`);
+      throw new Error(err.error || `Server error: ${response.status}`);
     }
 
     setAiStep('Parsing response...');
-    const data = await response.json();
+    data = await response.json();
 
-    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-    const clean = rawText.replace(/```json|```/g, '').trim();
-
-    let parsed;
-    try {
-      parsed = JSON.parse(clean);
-    } catch(parseErr){
-      const match = clean.match(/\[[\s\S]*\]/);
-      if(match) parsed = JSON.parse(match[0]);
-      else throw new Error('Could not parse AI response as JSON');
+    if(!data.success || !Array.isArray(data.questions) || data.questions.length === 0){
+      throw new Error('AI returned no questions');
     }
 
-    if(!Array.isArray(parsed) || parsed.length === 0) throw new Error('AI returned no questions');
-
-    const cleaned = parsed.filter(q => q.q && Array.isArray(q.options) && q.options.length >= 2).map(q => ({
+    const cleaned = data.questions.filter(q => q.q && Array.isArray(q.options) && q.options.length >= 2).map(q => ({
       q: q.q,
       options: q.options.slice(0,4).concat(['','','','']).slice(0,4).map((o,i) => o || '(No option ' + 'ABCD'[i] + ')'),
       answer: Math.max(0, Math.min(3, parseInt(q.answer) || 0)),
