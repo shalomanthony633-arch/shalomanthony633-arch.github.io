@@ -37,7 +37,6 @@ try {
 const ADMIN_PASSWORD = 'Quartiz@gmail1';
 
 // ══ AI BACKEND CONFIG ══
-const AI_BACKEND_URL = 'https://exampro-ai-proxy-1.onrender.com';
 </script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -99,43 +98,6 @@ textarea.field{resize:none;min-height:80px}
 .btn-white:hover{background:rgba(255,255,255,0.18)}
 .btn-sm{padding:6px 12px;font-size:11px}
 
-/* AI Generate tab styles */
-.ai-mode-toggle{display:flex;gap:8px;margin-bottom:14px}
-.ai-mode-btn{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.45);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;text-align:center}
-.ai-mode-btn.on{background:rgba(99,102,241,0.2);border-color:rgba(99,102,241,0.5);color:#a5b4fc}
-
-.photo-upload-zone{border:2px dashed rgba(255,255,255,0.15);border-radius:14px;padding:32px 20px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;margin-bottom:10px}
-.photo-upload-zone:hover,.photo-upload-zone.drag-over{border-color:rgba(99,102,241,0.5);background:rgba(99,102,241,0.05)}
-.photo-upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.photo-upload-icon{font-size:36px;margin-bottom:8px;display:block}
-.photo-upload-text{font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5}
-.photo-preview{width:100%;border-radius:10px;max-height:220px;object-fit:contain;background:rgba(0,0,0,0.3);display:none;margin-bottom:10px}
-
-.ai-q-count{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.ai-q-count label{font-size:12px;color:rgba(255,255,255,0.5);white-space:nowrap}
-.ai-q-count input[type=range]{flex:1;accent-color:#6366f1;cursor:pointer}
-.ai-q-count span{font-size:14px;font-weight:800;color:#a5b4fc;font-family:'DM Mono',monospace;min-width:28px;text-align:center}
-
-.ai-generating{display:none;text-align:center;padding:24px}
-.ai-spinner{width:40px;height:40px;border:3px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.ai-gen-text{font-size:13px;color:rgba(255,255,255,0.5)}
-.ai-gen-step{font-size:11px;color:rgba(99,102,241,0.8);margin-top:4px;font-family:'DM Mono',monospace}
-
-.ai-results{display:none;margin-top:12px}
-.ai-result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.ai-result-count{font-size:14px;font-weight:700;color:#4ade80}
-.ai-q-preview{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px;margin-bottom:8px;position:relative}
-.ai-q-preview-num{font-size:10px;color:rgba(255,255,255,0.3);font-family:'DM Mono',monospace;margin-bottom:4px}
-.ai-q-preview-text{font-size:13px;color:rgba(255,255,255,0.85);margin-bottom:6px;line-height:1.5}
-.ai-q-preview-opts{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px}
-.ai-q-opt{font-size:11px;color:rgba(255,255,255,0.4);padding:4px 8px;border-radius:6px;background:rgba(255,255,255,0.03)}
-.ai-q-opt.correct{color:#4ade80;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2)}
-.ai-q-remove{position:absolute;top:8px;right:8px;background:none;border:none;color:rgba(255,255,255,0.3);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;transition:all 0.15s}
-.ai-q-remove:hover{color:#f87171;background:rgba(239,68,68,0.1)}
-
-.ai-save-bar{display:flex;gap:8px;margin-top:14px;position:sticky;bottom:10px}
-
 /* Generated key display */
 .key-display{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:16px;text-align:center;margin-bottom:10px;display:none}
 .key-val{font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#a5b4fc;letter-spacing:0.15em;margin-bottom:8px}
@@ -174,10 +136,6 @@ textarea.field{resize:none;min-height:80px}
 .tab{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:8px 16px;font-size:12px;font-weight:600;color:rgba(255,255,255,0.45);cursor:pointer;white-space:nowrap;transition:all 0.15s;font-family:'DM Sans',sans-serif;-webkit-appearance:none}
 .tab.on{background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.25);color:#fff}
 
-/* AI tab special highlight */
-.tab.ai-tab{background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.3);color:#a5b4fc}
-.tab.ai-tab.on{background:rgba(99,102,241,0.25);border-color:rgba(99,102,241,0.6);color:#fff}
-
 .tab-panel{display:none}.tab-panel.on{display:block}
 
 .empty{text-align:center;padding:32px;color:rgba(255,255,255,0.3);font-size:13px}
@@ -212,6 +170,7 @@ select.field{appearance:none;-webkit-appearance:none;background-image:url("data:
   input,textarea,select{font-size:16px}
 }
 </style>
+<base target="_blank">
 <base target="_blank">
 </head>
 <body>
@@ -263,10 +222,8 @@ select.field{appearance:none;-webkit-appearance:none;background-image:url("data:
     <button class="tab on" onclick="switchTab('students')">👥 Students</button>
     <button class="tab" onclick="switchTab('questions')">📚 Questions</button>
     <button class="tab" onclick="switchTab('bulk')">⚡ Bulk Import</button>
-    <button class="tab ai-tab" onclick="switchTab('aigen')">🤖 AI Generate</button>
     <button class="tab" onclick="switchTab('chat')">💬 Chat</button>
   </div>
-
 
   <!-- STUDENTS TAB -->
   <div class="tab-panel" id="tab-students">
@@ -375,76 +332,6 @@ Q2. What is depreciation?
     </div>
   </div>
 
-  <!-- ══ AI GENERATE TAB ══ -->
-  <div class="tab-panel" id="tab-aigen">
-    <div class="card" style="border-color:rgba(99,102,241,0.3)">
-      <div class="card-title" style="color:#a5b4fc">🤖 AI Question Generator (Gemini)</div>
-
-      <!-- Course select -->
-      <select class="field" id="ai-subject" style="margin-bottom:12px"><option value="">-- Select Course --</option></select>
-
-      <!-- Mode toggle -->
-      <div class="ai-mode-toggle">
-        <button class="ai-mode-btn on" id="mode-text-btn" onclick="setAiMode('text')">📝 Paste Notes</button>
-        <button class="ai-mode-btn" id="mode-photo-btn" onclick="setAiMode('photo')">📸 Photo of Notes</button>
-      </div>
-
-      <!-- Text mode -->
-      <div id="ai-text-mode">
-        <textarea class="field" id="ai-notes-input" placeholder="Paste your lecture notes here. The AI will read them and generate exam questions automatically. Longer notes = more questions." rows="10" style="min-height:180px;font-size:13px;line-height:1.6"></textarea>
-      </div>
-
-      <!-- Photo mode -->
-      <div id="ai-photo-mode" style="display:none">
-        <div style="display:flex;gap:8px;margin-bottom:10px">
-          <button class="btn btn-blue" onclick="openCamera()" style="flex:1">📸 Open Camera</button>
-          <button class="btn btn-white" onclick="openGallery()" style="flex:1">🖼 Choose from Gallery</button>
-        </div>
-        <input type="file" id="ai-photo-input" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
-        <input type="file" id="ai-gallery-input" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
-        <img id="photo-preview-img" class="photo-preview" alt="Notes preview">
-        <div id="photo-file-name" style="font-size:11px;color:rgba(255,255,255,0.35);text-align:center;margin-bottom:8px;display:none"></div>
-        <button class="btn btn-white btn-sm" id="ai-change-photo-btn" onclick="resetPhotoUpload()" style="display:none;width:100%;margin-top:6px">📸 Change Photo</button>
-      </div>
-
-      <!-- Number of questions slider -->
-      <div class="ai-q-count">
-        <label>Questions to generate:</label>
-        <input type="range" id="ai-q-slider" min="5" max="50" value="20" step="5" oninput="document.getElementById('ai-q-slider-val').textContent=this.value">
-        <span id="ai-q-slider-val">20</span>
-      </div>
-
-      <!-- Generate button -->
-      <button class="btn btn-blue" id="ai-gen-btn" onclick="generateWithAI()" style="width:100%;margin-top:4px;background:rgba(99,102,241,0.2);border-color:rgba(99,102,241,0.5);color:#c7d2fe;font-size:14px;padding:14px">
-        ✨ Generate Questions with AI
-      </button>
-    </div>
-
-    <!-- Generating spinner -->
-    <div class="card ai-generating" id="ai-generating-card" style="border-color:rgba(99,102,241,0.2)">
-      <div class="ai-spinner"></div>
-      <div class="ai-gen-text">AI is reading your notes...</div>
-      <div class="ai-gen-step" id="ai-gen-step">Initializing...</div>
-    </div>
-
-    <!-- Results -->
-    <div id="ai-results-section" style="display:none">
-      <div class="card" style="border-color:rgba(34,197,94,0.3)">
-        <div class="ai-result-header">
-          <div class="ai-result-count" id="ai-result-count">0 questions ready</div>
-          <button class="btn btn-red btn-sm" onclick="clearAiResults()">✕ Clear</button>
-        </div>
-        <div id="ai-q-preview-list"></div>
-        <div class="ai-save-bar">
-          <button class="btn btn-green" id="ai-save-btn" onclick="saveAiQuestions()" style="flex:1;padding:14px;font-size:14px">
-            💾 Save All to Firebase
-          </button>
-          <button class="btn btn-blue btn-sm" onclick="regenerateAI()" style="padding:14px 16px" title="Regenerate">🔄</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- CHAT TAB -->
   <div class="tab-panel" id="tab-chat">
     <div class="card">
@@ -481,10 +368,6 @@ let _bulkParsed = [];
 let _adminMsgs = {};
 let _longPressTimer = null;
 let _currentDeleteMsg = null;
-let _aiGeneratedQuestions = [];
-let _aiCurrentMode = 'text';
-let _aiPhotoBase64 = null;
-let _aiPhotoMime = 'image/jpeg';
 
 // ══ LISTENER REFERENCES (for cleanup) ══
 let studentsListener = null;
@@ -775,12 +658,10 @@ function updateCourseSelects() {
   const sel = document.getElementById('q-subject');
   const filterSel = document.getElementById('q-filter');
   const bulkSel = document.getElementById('bulk-subject');
-  const aiSel = document.getElementById('ai-subject');
   
   if(sel) sel.innerHTML = opts;
   if(filterSel) filterSel.innerHTML = filterOpts;
 if(bulkSel) bulkSel.innerHTML = opts;
-  if(aiSel) aiSel.innerHTML = opts;
   const massDelSel = document.getElementById('mass-delete-subject');
   if(massDelSel) massDelSel.innerHTML = opts;
 }
@@ -1106,26 +987,6 @@ function shuffleAnswers(questions){
   });
 }
 
-function setAiMode(mode){
-  _aiCurrentMode=mode;
-  document.getElementById('ai-text-mode').style.display=mode==='text'?'block':'none';
-  document.getElementById('ai-photo-mode').style.display=mode==='photo'?'block':'none';
-  document.getElementById('mode-text-btn').classList.toggle('on',mode==='text');
-  document.getElementById('mode-photo-btn').classList.toggle('on',mode==='photo');
-}
-
-function openCamera(){
-  const input = document.getElementById('ai-photo-input');
-  input.setAttribute('capture', 'environment');
-  input.click();
-}
-
-function openGallery(){
-  const input = document.getElementById('ai-gallery-input');
-  input.removeAttribute('capture');
-  input.click();
-}
-
 function handlePhotoUpload(input){
   const file=input.files[0];
   if(!file) return;
@@ -1145,167 +1006,6 @@ function handlePhotoUpload(input){
   reader.readAsDataURL(file);
 }
 
-function resetPhotoUpload(){
-  _aiPhotoBase64 = null;
-  _aiPhotoMime = 'image/jpeg';
-  document.getElementById('ai-photo-input').value = '';
-  document.getElementById('photo-preview-img').style.display = 'none';
-  document.getElementById('photo-file-name').style.display = 'none';
-  document.getElementById('photo-drop-zone').style.display = 'block';
-  document.getElementById('ai-change-photo-btn').style.display = 'none';
-}
-
-function setAiStep(msg){
-  const el=document.getElementById('ai-gen-step');
-  if(el) el.textContent=msg;
-}
-
-async function generateWithAI(){
-  const subj = document.getElementById('ai-subject').value;
-  if(!subj){ toast('Select a course first'); return; }
-
-  const count = parseInt(document.getElementById('ai-q-slider').value) || 20;
-  const courseObj = allCourses.find(c => c.name === subj);
-  const courseIcon = courseObj ? (courseObj.icon || '📚') : '📚';
-
-  if(_aiCurrentMode === 'text'){
-    const notes = document.getElementById('ai-notes-input').value.trim();
-    if(!notes){ toast('Paste your notes first'); return; }
-  } else {
-    if(!_aiPhotoBase64){ toast('Upload a photo first'); return; }
-  }
-
-  document.getElementById('ai-generating-card').style.display = 'block';
-  document.getElementById('ai-results-section').style.display = 'none';
-  document.getElementById('ai-gen-btn').disabled = true;
-  setAiStep('Connecting to AI server...');
-
-  try {
-    let response, data;
-
-    if(_aiCurrentMode === 'text'){
-      const notes = document.getElementById('ai-notes-input').value.trim();
-
-      setAiStep('Generating questions...');
-      response = await fetch(`${AI_BACKEND_URL}/api/generate-text`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject: subj, count: count, notes: notes })
-      });
-
-    } else {
-      // Photo mode - send as multipart form data
-      const blob = await fetch(`data:${_aiPhotoMime};base64,${_aiPhotoBase64}`).then(r => r.blob());
-      const formData = new FormData();
-      formData.append('photo', blob, 'notes.jpg');
-      formData.append('subject', subj);
-      formData.append('count', count);
-
-      setAiStep('Analyzing photo...');
-      response = await fetch(`${AI_BACKEND_URL}/api/generate-photo`, {
-        method: 'POST',
-        body: formData
-      });
-    }
-
-    if(!response.ok){
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || `Server error: ${response.status}`);
-    }
-
-    setAiStep('Parsing response...');
-    data = await response.json();
-
-    if(!data.success || !Array.isArray(data.questions) || data.questions.length === 0){
-      throw new Error('AI returned no questions');
-    }
-
-    const cleaned = data.questions.filter(q => q.q && Array.isArray(q.options) && q.options.length >= 2).map(q => ({
-      q: q.q,
-      options: q.options.slice(0,4).concat(['','','','']).slice(0,4).map((o,i) => o || '(No option ' + 'ABCD'[i] + ')'),
-      answer: Math.max(0, Math.min(3, parseInt(q.answer) || 0)),
-      explanation: q.explanation || 'See your notes.',
-      subject: subj,
-      icon: courseIcon
-    }));
-
-    _aiGeneratedQuestions = shuffleAnswers(cleaned);
-
-    document.getElementById('ai-generating-card').style.display = 'none';
-    renderAiResults(_aiGeneratedQuestions);
-    document.getElementById('ai-results-section').style.display = 'block';
-    toast(`✅ ${_aiGeneratedQuestions.length} questions generated!`);
-
-  } catch(err){
-    document.getElementById('ai-generating-card').style.display = 'none';
-    toast('❌ AI Error: ' + err.message);
-    console.error('AI Generate Error:', err);
-  }
-
-  document.getElementById('ai-gen-btn').disabled = false;
-}
-
-function renderAiResults(questions){
-  const countEl=document.getElementById('ai-result-count');
-  if(countEl) countEl.textContent=questions.length+' questions ready to save';
-
-  const listEl=document.getElementById('ai-q-preview-list');
-  if(!listEl) return;
-
-  listEl.innerHTML=questions.map((q,i)=>`
-    <div class="ai-q-preview" id="ai-q-${i}">
-      <button class="ai-q-remove" onclick="removeAiQ(${i})">✕</button>
-      <div class="ai-q-preview-num">Q${i+1}</div>
-      <div class="ai-q-preview-text">${escapeHtml(q.q)}</div>
-      <div class="ai-q-preview-opts">
-        ${q.options.map((o,j)=>`<div class="ai-q-opt${j===q.answer?' correct':''}">${'ABCD'[j]}. ${escapeHtml(o)}</div>`).join('')}
-      </div>
-      ${q.explanation?`<div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:4px;font-style:italic">${escapeHtml(q.explanation)}</div>`:''}
-    </div>`).join('');
-}
-
-function removeAiQ(index){
-  _aiGeneratedQuestions.splice(index,1);
-  renderAiResults(_aiGeneratedQuestions);
-  const countEl=document.getElementById('ai-result-count');
-  if(countEl) countEl.textContent=_aiGeneratedQuestions.length+' questions ready to save';
-  if(_aiGeneratedQuestions.length===0) document.getElementById('ai-results-section').style.display='none';
-}
-
-function clearAiResults(){
-  _aiGeneratedQuestions=[];
-  document.getElementById('ai-results-section').style.display='none';
-}
-
-function regenerateAI(){
-  document.getElementById('ai-results-section').style.display='none';
-  generateWithAI();
-}
-
-async function saveAiQuestions(){
-  if(!db){toast('Database not connected');return;}
-  if(!_aiGeneratedQuestions.length){toast('No questions to save');return;}
-  const btn=document.getElementById('ai-save-btn');
-  btn.disabled=true;btn.textContent='Saving...';
-  let saved=0,failed=0;
-  for(const q of _aiGeneratedQuestions){
-    try{
-      await db.ref('questions').push({subject:q.subject,icon:q.icon,q:q.q,options:q.options,answer:q.answer,explanation:q.explanation,created:Date.now()});
-      saved++;
-      btn.textContent=`Saving... ${saved}/${_aiGeneratedQuestions.length}`;
-    } catch(e){failed++;}
-  }
-  btn.disabled=false;btn.textContent='💾 Save All to Firebase';
-  toast(`✅ ${saved} questions saved!${failed>0?' '+failed+' failed':''}`);
-  if(saved>0){
-    _aiGeneratedQuestions=[];
-    document.getElementById('ai-results-section').style.display='none';
-    document.getElementById('ai-notes-input').value='';
-    loadStats();
-  }
-}
-
-// ══ BULK IMPORT ══
 function previewBulk() {
   const text = document.getElementById('bulk-input').value.trim();
   const subj = document.getElementById('bulk-subject').value;
