@@ -396,11 +396,12 @@ Q2. What is depreciation?
 
       <!-- Photo mode -->
       <div id="ai-photo-mode" style="display:none">
-        <div class="photo-upload-zone" id="photo-drop-zone">
-          <input type="file" id="ai-photo-input" accept="image/*" onchange="handlePhotoUpload(this)">
-          <span class="photo-upload-icon">📸</span>
-          <div class="photo-upload-text">Tap to snap or upload photo of your notes<br><span style="font-size:11px;opacity:0.6">JPEG, PNG, WEBP supported</span></div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button class="btn btn-blue" onclick="openCamera()" style="flex:1">📸 Open Camera</button>
+          <button class="btn btn-white" onclick="openGallery()" style="flex:1">🖼 Choose from Gallery</button>
         </div>
+        <input type="file" id="ai-photo-input" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
+        <input type="file" id="ai-gallery-input" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
         <img id="photo-preview-img" class="photo-preview" alt="Notes preview">
         <div id="photo-file-name" style="font-size:11px;color:rgba(255,255,255,0.35);text-align:center;margin-bottom:8px;display:none"></div>
         <button class="btn btn-white btn-sm" id="ai-change-photo-btn" onclick="resetPhotoUpload()" style="display:none;width:100%;margin-top:6px">📸 Change Photo</button>
@@ -602,17 +603,25 @@ async function authenticateFingerprint() {
   }
 }
 
-// Check fingerprint availability - button always visible, shows register or unlock text
+// ══ FINGERPRINT BUTTON TEXT UPDATE ══
+function updateFingerprintButton(){
+  const btn = document.getElementById('finger-btn');
+  if(!btn) return;
+  const hasCred = localStorage.getItem('admin_fp_cred');
+  btn.innerHTML = hasCred 
+    ? '<span class="finger-icon">👆</span><span>Unlock with Fingerprint</span>'
+    : '<span class="finger-icon">👆</span><span>Register Fingerprint</span>';
+}
+
+// Check fingerprint availability
 if (window.PublicKeyCredential && window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
   PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(available => {
     updateFingerprintButton();
   }).catch(() => {
-    // Fingerprint not supported on this device, hide button
     const btn = document.getElementById('finger-btn');
     if(btn) btn.style.display = 'none';
   });
 } else {
-  // WebAuthn not supported at all, hide button
   const btn = document.getElementById('finger-btn');
   if(btn) btn.style.display = 'none';
 }
@@ -1103,6 +1112,18 @@ function setAiMode(mode){
   document.getElementById('ai-photo-mode').style.display=mode==='photo'?'block':'none';
   document.getElementById('mode-text-btn').classList.toggle('on',mode==='text');
   document.getElementById('mode-photo-btn').classList.toggle('on',mode==='photo');
+}
+
+function openCamera(){
+  const input = document.getElementById('ai-photo-input');
+  input.setAttribute('capture', 'environment');
+  input.click();
+}
+
+function openGallery(){
+  const input = document.getElementById('ai-gallery-input');
+  input.removeAttribute('capture');
+  input.click();
 }
 
 function handlePhotoUpload(input){
