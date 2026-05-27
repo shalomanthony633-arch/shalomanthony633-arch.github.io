@@ -898,7 +898,13 @@ let currentUser = null;
 function loadSession() {
   try {
     const saved = localStorage.getItem('lumiq_user');
-    if (saved) { currentUser = JSON.parse(saved); updateNavUser(currentUser); }
+    if (saved) {
+      currentUser = JSON.parse(saved);
+      updateNavUser(currentUser);
+      // Already signed in — go straight to the app, skip landing page
+      goToApp();
+      return;
+    }
   } catch(e) {}
 }
 
