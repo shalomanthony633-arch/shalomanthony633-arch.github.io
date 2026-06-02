@@ -807,8 +807,8 @@ body {
   <p class="section-sub fade-in fade-in-delay-2">Less than the cost of a textbook. Cancel or change plan anytime.</p>
   <div class="plan-tabs-row fade-in fade-in-delay-2">
     <div class="p-tab active-blue" onclick="switchPlan('monthly',this)"><div class="p-tab-name">Monthly</div><div class="p-tab-price">₦2,500</div><div class="p-tab-sub">per month</div></div>
-    <div class="p-tab" onclick="switchPlan('quarterly',this)"><div class="p-tab-name">3 Months</div><div class="p-tab-price">₦6,000</div><div class="p-tab-sub">save ₦1,500</div></div>
-    <div class="p-tab" onclick="switchPlan('yearly',this)"><div class="p-tab-name">Full Year</div><div class="p-tab-price">₦18k</div><div class="p-tab-sub">save ₦12,000</div></div>
+    <div class="p-tab" onclick="switchPlan('quarterly',this)"><div class="p-tab-name">Semester</div><div class="p-tab-price">₦6,500</div><div class="p-tab-sub">save ₦1,000</div></div>
+    <div class="p-tab" onclick="switchPlan('yearly',this)"><div class="p-tab-name">Full Year</div><div class="p-tab-price">₦20k</div><div class="p-tab-sub">save ₦10,000</div></div>
   </div>
   <div class="plan-panel active fade-in fade-in-delay-3" id="plan-monthly">
     <div class="plan-detail-card">
@@ -825,7 +825,7 @@ body {
   </div>
   <div class="plan-panel" id="plan-quarterly">
     <div class="plan-detail-card" style="border-color:rgba(168,85,247,0.3)">
-      <div class="plan-detail-top"><div><div class="plan-big-price">₦6,000</div><div class="plan-big-period">3 months · saves ₦1,500</div></div><div class="plan-save-pill" style="color:#d8b4fe;border-color:rgba(168,85,247,0.35);background:rgba(168,85,247,0.12)">⭐ Best value</div></div>
+      <div class="plan-detail-top"><div><div class="plan-big-price">₦6,500</div><div class="plan-big-period">semester · saves ₦1,000</div></div><div class="plan-save-pill" style="color:#d8b4fe;border-color:rgba(168,85,247,0.35);background:rgba(168,85,247,0.12)">⭐ Best value</div></div>
       <div class="plan-feats-list">
         <div class="plan-feat-row"><div class="plan-feat-icon" style="background:rgba(168,85,247,0.15)">✓</div>Everything in Monthly</div>
         <div class="plan-feat-row"><div class="plan-feat-icon" style="background:rgba(168,85,247,0.15)">✓</div>25 note scans per week</div>
@@ -833,20 +833,20 @@ body {
         <div class="plan-feat-row"><div class="plan-feat-icon" style="background:rgba(168,85,247,0.15)">✓</div>PDF question downloads</div>
         <div class="plan-feat-row"><div class="plan-feat-icon" style="background:rgba(168,85,247,0.15)">✓</div>Covers a full semester</div>
       </div>
-      <button class="btn-pay purple" onclick="payWithPaystack('quarterly', 6000, currentUser ? currentUser.email : null)">Get Started — ₦6,000 / 3 months</button>
+      <button class="btn-pay purple" onclick="payWithPaystack('Semester', 6500, currentUser ? currentUser.email : null)">Get Started — ₦6,500 / semester</button>
     </div>
   </div>
   <div class="plan-panel" id="plan-yearly">
     <div class="plan-detail-card" style="border-color:rgba(16,185,129,0.3)">
-      <div class="plan-detail-top"><div><div class="plan-big-price">₦18,000</div><div class="plan-big-period">full year · saves ₦12,000</div></div><div class="plan-save-pill" style="color:#6ee7b7;border-color:rgba(16,185,129,0.35);background:rgba(16,185,129,0.12)">💎 Best deal</div></div>
+      <div class="plan-detail-top"><div><div class="plan-big-price">₦20,000</div><div class="plan-big-period">full year · saves ₦10,000</div></div><div class="plan-save-pill" style="color:#6ee7b7;border-color:rgba(16,185,129,0.35);background:rgba(16,185,129,0.12)">💎 Best deal</div></div>
       <div class="plan-feats-list">
-        <div class="plan-feat-row"><div class="plan-feat-icon" style="background:rgba(16,185,129,0.15)">✓</div>Everything in 3 Months</div>
+        <div class="plan-feat-row"><div class="plan-feat-icon" style="background:rgba(16,185,129,0.15)">✓</div>Everything in Semester</div>
         <div class="plan-feat-row"><div class="plan-feat-icon" style="background:rgba(16,185,129,0.15)">✓</div>Unlimited note scans</div>
         <div class="plan-feat-row"><div class="plan-feat-icon" style="background:rgba(16,185,129,0.15)">✓</div>Early access to new features</div>
         <div class="plan-feat-row"><div class="plan-feat-icon" style="background:rgba(16,185,129,0.15)">✓</div>Full academic year covered</div>
         <div class="plan-feat-row"><div class="plan-feat-icon" style="background:rgba(16,185,129,0.15)">✓</div>Priority support</div>
       </div>
-      <button class="btn-pay green" onclick="payWithPaystack('yearly', 18000, currentUser ? currentUser.email : null)">Get Started — ₦18,000 / year</button>
+      <button class="btn-pay green" onclick="payWithPaystack('Yearly', 20000, currentUser ? currentUser.email : null)">Get Started — ₦20,000 / year</button>
     </div>
   </div>
   <div class="plan-or fade-in">or</div>
@@ -901,8 +901,10 @@ function loadSession() {
     if (saved) {
       currentUser = JSON.parse(saved);
       updateNavUser(currentUser);
-      // Already signed in — go straight to the app, skip landing page
-      goToApp();
+      // Returning user — go straight to the app without re-injecting lq_trial.
+      // The app already has its own auth state (key / trial) in localStorage;
+      // passing lq_trial=1 again would confuse it when the trial has expired.
+      window.location.href = APP_URL;
       return;
     }
   } catch(e) {}
