@@ -385,6 +385,8 @@ footer {
   section {
     max-width: 800px;
   }
+
+  /* ── HERO: 2-col layout ── */
   #hero {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -394,18 +396,28 @@ footer {
     padding-top: calc(96px + var(--sat));
     padding-bottom: 80px;
   }
-  #hero .hero-badge,
-  #hero .hero-h1,
-  #hero .hero-sub,
-  #hero .hero-ctas,
-  #hero .hero-trust {
+
+  /* All text content sits in col 1 as a flex column */
+  .hero-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
     text-align: left;
+  }
+
+  /* Inline-flex elements need left alignment too */
+  .hero-text .hero-badge,
+  .hero-text .hero-ctas,
+  .hero-text .hero-trust {
     justify-content: flex-start;
   }
+
   .hero-ctas {
     flex-direction: row;
     flex-wrap: wrap;
   }
+
+  /* Mockup sits in col 2 */
   .mockup-wrap {
     margin: 0;
     padding: 0;
@@ -415,6 +427,7 @@ footer {
     max-width: 300px;
     margin: 0 auto;
   }
+
   .why-stack {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -562,22 +575,28 @@ body {
 
 <!-- HERO -->
 <section id="hero">
-  <div class="hero-badge fade-in">
-    <span class="hero-badge-dot"></span>
-    Now live for Nigerian students
+
+  <!-- ── Text column (col 1 on desktop) ── -->
+  <div class="hero-text">
+    <div class="hero-badge fade-in">
+      <span class="hero-badge-dot"></span>
+      Now live for Nigerian students
+    </div>
+    <h1 class="hero-h1 fade-in fade-in-delay-1">
+      CBT practice that<br><span class="grad">adapts to how<br>you learn</span>
+    </h1>
+    <p class="hero-sub fade-in fade-in-delay-2">Pass JAMB, WAEC, and university exams with personalised mock tests — powered by AI that reads your notes, tracks your weak spots, and builds your exam confidence.</p>
+    <div class="hero-ctas fade-in fade-in-delay-3">
+      <button class="btn-primary" onclick="openModal()">Start Free Trial</button>
+      <a href="#how" class="btn-ghost">See how it works</a>
+    </div>
+    <div class="hero-trust fade-in fade-in-delay-3">
+      <div class="hero-trust-avatars"><span>👩🏾</span><span>👨🏿</span><span>👩🏾</span><span>👨🏽</span></div>
+      <span>Trusted by students across Nigerian universities</span>
+    </div>
   </div>
-  <h1 class="hero-h1 fade-in fade-in-delay-1">
-    CBT practice that<br><span class="grad">adapts to how<br>you learn</span>
-  </h1>
-  <p class="hero-sub fade-in fade-in-delay-2">Pass JAMB, WAEC, and university exams with personalised mock tests — powered by AI that reads your notes, tracks your weak spots, and builds your exam confidence.</p>
-  <div class="hero-ctas fade-in fade-in-delay-3">
-    <button class="btn-primary" onclick="openModal()">Start Free Trial</button>
-    <a href="#how" class="btn-ghost">See how it works</a>
-  </div>
-  <div class="hero-trust fade-in fade-in-delay-3">
-    <div class="hero-trust-avatars"><span>👩🏾</span><span>👨🏿</span><span>👩🏾</span><span>👨🏽</span></div>
-    <span>Trusted by students across Nigerian universities</span>
-  </div>
+
+  <!-- ── Mockup column (col 2 on desktop) ── -->
   <div class="mockup-wrap fade-in fade-in-delay-3">
     <div class="mockup-glow"></div>
     <div class="mockup-phone">
@@ -645,6 +664,7 @@ body {
       </div>
     </div>
   </div>
+
 </section>
 
 <!-- SOCIAL PROOF -->
@@ -901,9 +921,6 @@ function loadSession() {
     if (saved) {
       currentUser = JSON.parse(saved);
       updateNavUser(currentUser);
-      // Returning user — go straight to the app without re-injecting lq_trial.
-      // The app already has its own auth state (key / trial) in localStorage;
-      // passing lq_trial=1 again would confuse it when the trial has expired.
       window.location.href = APP_URL;
       return;
     }
@@ -949,7 +966,6 @@ function openModal() {
 function closeModal() {
   document.getElementById('authModal').classList.remove('open');
   document.body.style.overflow = '';
-  // Reset to main content in case success was shown
   document.getElementById('modalMainContent').style.display = '';
   document.getElementById('modalSuccess').classList.remove('show');
 }
@@ -1005,7 +1021,6 @@ function handleEmailSignIn() {
   else pwEl.classList.remove('error');
   if (!valid) return;
   setLoading(btn, '');
-  // Simulate network delay for realism
   setTimeout(() => {
     clearLoading(btn);
     onSignInSuccess({ name: email.split('@')[0], email: email, picture: null });
@@ -1030,7 +1045,7 @@ function onSignInSuccess(user) {
   setTimeout(goToApp, 2800);
 }
 
-// ══ GO TO APP — passes session to app via URL params ══
+// ══ GO TO APP ══
 function goToApp(plan, accessKey) {
   const url = new URL(APP_URL);
   if (currentUser) {
@@ -1052,7 +1067,7 @@ function goToApp(plan, accessKey) {
 }
 
 // ══ PAYSTACK PAYMENT ══
-const PAYSTACK_PUBLIC_KEY = 'pk_test_YOUR_PAYSTACK_KEY_HERE'; // ← REPLACE: from Paystack Dashboard
+const PAYSTACK_PUBLIC_KEY = 'pk_test_YOUR_PAYSTACK_KEY_HERE'; // ← REPLACE
 function payWithPaystack(plan, amount, email) {
   if (PAYSTACK_PUBLIC_KEY.includes('YOUR_PAYSTACK')) {
     showToast('Payment setup in progress. Start your free trial for now!');
@@ -1063,7 +1078,7 @@ function payWithPaystack(plan, amount, email) {
   const handler = PaystackPop.setup({
     key: PAYSTACK_PUBLIC_KEY,
     email: email,
-    amount: amount * 100, // kobo
+    amount: amount * 100,
     currency: 'NGN',
     ref: 'LUMIQ_' + plan + '_' + Date.now(),
     metadata: { plan: plan, user_email: email },
@@ -1121,14 +1136,11 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.12 });
 document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
-// ══ WHY-BOX SCROLL REVEAL — slide in from sides ══
+// ══ WHY-BOX SCROLL REVEAL ══
 const whyObserver = new IntersectionObserver((entries) => {
-  entries.forEach((e, i) => {
+  entries.forEach((e) => {
     if (e.isIntersecting) {
-      // stagger each box slightly
-      setTimeout(() => {
-        e.target.classList.add('revealed');
-      }, 80);
+      setTimeout(() => { e.target.classList.add('revealed'); }, 80);
       whyObserver.unobserve(e.target);
     }
   });
@@ -1182,7 +1194,6 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   animate();
 })();
 
-
 // ══ WAITLIST ══
 function joinWaitlist() {
   const el = document.getElementById('waitlistEmail');
@@ -1193,8 +1204,6 @@ function joinWaitlist() {
     return;
   }
   el.style.borderColor = '';
-  // In production, send to your backend / Firebase / Airtable / Formspree
-  // fetch('https://your-api.com/waitlist', { method:'POST', body: JSON.stringify({email}) });
   showToast('You\'re on the list! We\'ll email you when your school is live.');
   el.value = '';
 }
