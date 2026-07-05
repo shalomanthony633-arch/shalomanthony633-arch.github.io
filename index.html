@@ -1039,6 +1039,9 @@ function handleEmailSignIn() {
     if (err && (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-login-credentials' || err.code === 'auth/invalid-credential')) {
       // No account yet → create one automatically (sign up)
       auth.createUserWithEmailAndPassword(email, pw).then(function(res){
+        // Send a real verification email so we know the address exists.
+        try { res.user.sendEmailVerification(); } catch(e){}
+        showToast('📧 Verification email sent to ' + email + ' — please confirm it.');
         finishEmail(res.user, btn);
       }).catch(function(err2){
         clearLoading(btn);
@@ -1055,8 +1058,18 @@ function handleEmailSignIn() {
 
 function finishEmail(u, btn){
   clearLoading(btn);
+  // Google accounts are inherently verified; email/password ones may not be.
+  var isGoogle = (u.providerData && u.providerData.some(function(p){ return p.providerId === 'google.com'; }));
+  if (!isGoogle && u.emailVerified === false) {
+    // Soft reminder — we let them try the app, but nudge them to verify.
+    try {
+      var last = parseInt(localStorage.getItem('lumiq_verif_sent')||'0',10);
+      if (Date.now() - last > 5*60*1000) { u.sendEmailVerification(); localStorage.setItem('lumiq_verif_sent', String(Date.now())); }
+    } catch(e){}
+    showToast('📧 Please verify your email — we sent you a link. You can still explore for now.');
+  }
   persistUser(u).then(function(){
-    onSignInSuccess({ name: (u.displayName || (u.email||'').split('@')[0]), email: u.email, picture: u.photoURL, uid: u.uid });
+    onSignInSuccess({ name: (u.displayName || (u.email||'').split('@')[0]), email: u.email, picture: u.photoURL, uid: u.uid, verified: (isGoogle || u.emailVerified) });
   });
 }
 
@@ -1073,6 +1086,7 @@ function persistUser(u){
       base.photo = u.photoURL || base.photo || '';
       base.lastLogin = now;
       base.provider = (u.providerData && u.providerData[0] && u.providerData[0].providerId) || 'password';
+      base.emailVerified = !!u.emailVerified;
       return ref.set(base);
     });
   } catch(e){ return Promise.resolve(); }
@@ -1248,14 +1262,36 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     draw() { ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fillStyle=this.color+this.alpha+')'; ctx.fill(); }
   }
   function drawLines() {
+    // Skip line-linking entirely on small screens (biggest cost); use squared
+    // distance to avoid sqrt in the hot loop everywhere else.
+    if (W < 700) return;
+    var MAX = 110, MAX2 = MAX*MAX;
     for (let i=0;i<particles.length;i++) for (let j=i+1;j<particles.length;j++) {
-      const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y, d=Math.sqrt(dx*dx+dy*dy);
-      if (d<110) { ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y); ctx.lineTo(particles[j].x,particles[j].y); ctx.strokeStyle='rgba(99,102,241,'+(0.07*(1-d/110))+')'; ctx.lineWidth=0.5; ctx.stroke(); }
+      const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y, d2=dx*dx+dy*dy;
+      if (d2<MAX2) { var d=Math.sqrt(d2); ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y); ctx.lineTo(particles[j].x,particles[j].y); ctx.strokeStyle='rgba(99,102,241,'+(0.07*(1-d/MAX))+')'; ctx.lineWidth=0.5; ctx.stroke(); }
     }
   }
-  for (let i=0;i<80;i++) particles.push(new Particle());
-  function animate() { ctx.clearRect(0,0,W,H); drawLines(); particles.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(animate); }
-  animate();
+  // Adaptive particle count — far fewer on mobile; respect reduced-motion & save-data.
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var saveData = navigator.connection && navigator.connection.saveData;
+  var lowPower = (navigator.hardwareConcurrency || 4) <= 4;
+  var COUNT = window.innerWidth < 700 ? 22 : (lowPower ? 34 : 52);
+  if (reduceMotion || saveData) COUNT = 0;
+  for (let i=0;i<COUNT;i++) particles.push(new Particle());
+
+  var running = true;
+  document.addEventListener('visibilitychange', function(){
+    running = !document.hidden;
+    if (running) requestAnimationFrame(animate);   // resume
+  });
+
+  function animate() {
+    if (!running) return;                          // pause when tab not visible
+    ctx.clearRect(0,0,W,H);
+    if (COUNT) { drawLines(); particles.forEach(p=>{p.update();p.draw();}); }
+    requestAnimationFrame(animate);
+  }
+  if (COUNT) animate();
 })();
 
 // ══ WAITLIST ══
