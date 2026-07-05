@@ -11,6 +11,7 @@
 <meta property="og:image" content="https://placehold.co/1200x630/0c1122/6366f1?text=Lumiq+-+Smart+CBT+Practice">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#04060f">
+<link rel="manifest" href='data:application/manifest+json,{"name":"Lumiq — CBT Practice","short_name":"Lumiq","start_url":"app.html","display":"standalone","background_color":"%2304060f","theme_color":"%2304060f","description":"Practice past questions. Ace your exams.","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 512 512%27%3E%3Crect width=%27512%27 height=%27512%27 rx=%27112%27 fill=%27%2304060f%27/%3E%3Ccircle cx=%27256%27 cy=%27256%27 r=%27180%27 fill=%27none%27 stroke=%27%236366f1%27 stroke-width=%2728%27/%3E%3Ccircle cx=%27256%27 cy=%27256%27 r=%27108%27 fill=%27none%27 stroke=%27%23a5b4fc%27 stroke-width=%2728%27/%3E%3Ccircle cx=%27256%27 cy=%27256%27 r=%2740%27 fill=%27%23fff%27/%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml","purpose":"any"}]}' >
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Lumiq">
@@ -473,6 +474,19 @@ body {
 }
 
 </style>
+<!-- ══ FIREBASE (loaded early so auth is ready on first click) ══ -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+  if (!firebase.apps.length) firebase.initializeApp({
+    apiKey:"AIzaSyDMBe6KhptLj_B6mvN5kceI6wPpflWibhY",
+    authDomain:"exam-pro-cbt.firebaseapp.com",
+    databaseURL:"https://exam-pro-cbt-default-rtdb.firebaseio.com",
+    projectId:"exam-pro-cbt",
+    storageBucket:"exam-pro-cbt.firebasestorage.app"
+  });
+</script>
 </head>
 <body>
 
@@ -588,6 +602,7 @@ body {
     <p class="hero-sub fade-in fade-in-delay-2">Pass JAMB, WAEC, and university exams with personalised mock tests — powered by AI that reads your notes, tracks your weak spots, and builds your exam confidence.</p>
     <div class="hero-ctas fade-in fade-in-delay-3">
       <button class="btn-primary" onclick="openModal()">Start Free Trial</button>
+      <button class="btn-primary" id="downloadAppBtn" onclick="downloadApp()" style="background:linear-gradient(135deg,#10b981,#059669)">📲 Download App — Add to Home Screen</button>
       <a href="#how" class="btn-ghost">See how it works</a>
     </div>
     <div class="hero-trust fade-in fade-in-delay-3">
@@ -909,8 +924,8 @@ body {
 
 <script>
 // ══ CONFIG — swap in your real values ══
-const APP_URL = 'https://project-lumiq.vercel.app';
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID_HERE'; // ← REPLACE: from Google Cloud Console
+const APP_URL = 'https://shalomanthony633-arch.github.io/ExamPro-CBT-pratice/app.html';
+const GOOGLE_CLIENT_ID = '633837081524-9krodbq63pa3i5hda67mas569vc9fobn.apps.googleusercontent.com';
 
 // ══ SESSION MANAGEMENT ══
 let currentUser = null;
@@ -986,25 +1001,21 @@ function togglePassword() {
 // ══ GOOGLE SIGN IN ══
 function handleGoogleSignIn() {
   const btn = document.querySelector('.btn-google');
-  if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
-    setLoading(btn, '');
-    setTimeout(() => {
-      clearLoading(btn);
-      onSignInSuccess({ name: 'Demo Student', email: 'demo@lumiq.app', picture: null });
-    }, 600);
-    return;
-  }
   setLoading(btn, '');
-  google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: function(response) {
+  try {
+    var provider = new firebase.auth.GoogleAuthProvider();
+    firebase.auth().signInWithPopup(provider).then(function(res){
       clearLoading(btn);
-      const payload = JSON.parse(atob(response.credential.split('.')[1]));
-      onSignInSuccess({ name: payload.name, email: payload.email, picture: payload.picture });
-    },
-    auto_select: false,
-  });
-  google.accounts.id.prompt();
+      var u = res.user;
+      persistUser(u).then(function(){
+        onSignInSuccess({ name: u.displayName || (u.email||'').split('@')[0], email: u.email, picture: u.photoURL, uid: u.uid });
+      });
+    }).catch(function(err){
+      clearLoading(btn);
+      if (err && (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request')) return;
+      showToast(friendlyAuthError(err));
+    });
+  } catch(e){ clearLoading(btn); showToast('Google sign-in unavailable. Try email instead.'); }
 }
 
 // ══ EMAIL SIGN IN ══
@@ -1021,10 +1032,62 @@ function handleEmailSignIn() {
   else pwEl.classList.remove('error');
   if (!valid) return;
   setLoading(btn, '');
-  setTimeout(() => {
-    clearLoading(btn);
-    onSignInSuccess({ name: email.split('@')[0], email: email, picture: null });
-  }, 800);
+  var auth = firebase.auth();
+  auth.signInWithEmailAndPassword(email, pw).then(function(res){
+    finishEmail(res.user, btn);
+  }).catch(function(err){
+    if (err && (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-login-credentials' || err.code === 'auth/invalid-credential')) {
+      // No account yet → create one automatically (sign up)
+      auth.createUserWithEmailAndPassword(email, pw).then(function(res){
+        finishEmail(res.user, btn);
+      }).catch(function(err2){
+        clearLoading(btn);
+        if (err2 && err2.code === 'auth/wrong-password') { pwEl.classList.add('error'); showToast('Wrong password for this email.'); }
+        else showToast(friendlyAuthError(err2));
+      });
+    } else if (err && err.code === 'auth/wrong-password') {
+      clearLoading(btn); pwEl.classList.add('error'); showToast('Wrong password. Try again.');
+    } else {
+      clearLoading(btn); showToast(friendlyAuthError(err));
+    }
+  });
+}
+
+function finishEmail(u, btn){
+  clearLoading(btn);
+  persistUser(u).then(function(){
+    onSignInSuccess({ name: (u.displayName || (u.email||'').split('@')[0]), email: u.email, picture: u.photoURL, uid: u.uid });
+  });
+}
+
+// Save/merge the account record in Firebase so students are recognised anywhere
+function persistUser(u){
+  try {
+    var db = firebase.database();
+    var ref = db.ref('users/' + u.uid);
+    return ref.once('value').then(function(sn){
+      var now = Date.now();
+      var base = sn.val() || { createdAt: now, plan: 'trial' };
+      base.name = u.displayName || base.name || (u.email||'').split('@')[0];
+      base.email = u.email || base.email || '';
+      base.photo = u.photoURL || base.photo || '';
+      base.lastLogin = now;
+      base.provider = (u.providerData && u.providerData[0] && u.providerData[0].providerId) || 'password';
+      return ref.set(base);
+    });
+  } catch(e){ return Promise.resolve(); }
+}
+
+function friendlyAuthError(err){
+  var c = err && err.code || '';
+  if (c === 'auth/email-already-in-use') return 'That email already has an account — check your password.';
+  if (c === 'auth/weak-password') return 'Password too weak — use at least 6 characters.';
+  if (c === 'auth/invalid-email') return 'That email address looks invalid.';
+  if (c === 'auth/network-request-failed') return 'Network error — check your connection.';
+  if (c === 'auth/too-many-requests') return 'Too many attempts. Please wait a moment and try again.';
+  if (c === 'auth/operation-not-allowed') return 'This sign-in method is not enabled in Firebase yet.';
+  if (c === 'auth/unauthorized-domain') return 'This domain is not authorised in Firebase Auth settings.';
+  return 'Sign-in failed. Please try again.';
 }
 
 document.getElementById('emailInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('passwordInput').focus(); });
@@ -1060,6 +1123,7 @@ function goToApp(plan, accessKey) {
     } else {
       url.searchParams.set('lq_name', displayName);
       url.searchParams.set('lq_email', currentUser.email);
+      if (currentUser.uid) url.searchParams.set('lq_uid', currentUser.uid);
       url.searchParams.set('lq_trial', '1');
     }
   }
@@ -1212,5 +1276,111 @@ document.getElementById('waitlistEmail').addEventListener('keydown', e => { if (
 loadSession();
 </script>
 <script src="https://js.paystack.co/v1/inline.js"></script>
+
+<!-- ══ LUMIQ ANALYTICS + INSTALL + PROTECTION ══ -->
+<script>
+(function(){
+  var db=null; try{db=firebase.database()}catch(e){}
+
+  // Stable per-device id
+  function deviceId(){
+    var d=localStorage.getItem('lumiq_device_id');
+    if(!d){ d='DV-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,8).toUpperCase(); localStorage.setItem('lumiq_device_id',d); }
+    return d;
+  }
+  var DID=deviceId();
+
+  function authed(fn){
+    try{
+      var a=firebase.auth();
+      if(a.currentUser){fn();return}
+      a.signInAnonymously().then(fn).catch(function(){});
+    }catch(e){}
+  }
+
+  // ── Blocked-device check: if admin blocked this device, wall the page ──
+  function enforceBlock(){
+    if(!db)return;
+    db.ref('blocked/'+DID).on('value',function(sn){
+      if(sn.val()){
+        document.documentElement.innerHTML='<body style="margin:0;background:#04060f;color:#fff;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;padding:20px"><div><div style="font-size:3rem">🚫</div><h2>Access blocked</h2><p style="color:rgba(255,255,255,0.5);max-width:320px">This device has been blocked by the administrator.<br>Contact support on WhatsApp: 0814 389 5403</p></div></body>';
+      }
+    });
+  }
+
+  // ── Visit tracking (every open of this link) ──
+  function trackVisit(){
+    if(!db)return;
+    var payload={
+      deviceId:DID, ts:Date.now(),
+      ua:(navigator.userAgent||'').slice(0,180),
+      ref:(document.referrer||'').slice(0,120),
+      lang:navigator.language||'', screen:(screen.width+'x'+screen.height),
+      page:'landing'
+    };
+    db.ref('analytics/visits').push(payload).catch(function(){});
+    var dv=db.ref('analytics/devices/'+DID);
+    dv.child('visits').transaction(function(v){return (v||0)+1});
+    dv.update({lastSeen:Date.now(),ua:payload.ua});
+  }
+
+  // ── DevTools / F12 detection ──
+  var devtoolsLogged={};
+  function logDevtools(method){
+    if(!db)return;
+    if(devtoolsLogged[method] && Date.now()-devtoolsLogged[method]<30000) return; // throttle
+    devtoolsLogged[method]=Date.now();
+    db.ref('analytics/devtools').push({
+      deviceId:DID, ts:Date.now(), method:method,
+      ua:(navigator.userAgent||'').slice(0,180), page:'landing'
+    }).catch(function(){});
+    var dv=db.ref('analytics/devices/'+DID);
+    dv.child('devtoolsHits').transaction(function(v){return (v||0)+1});
+    dv.update({lastDevtools:Date.now(),flagged:true});
+  }
+  document.addEventListener('keydown',function(e){
+    var k=(e.key||'').toUpperCase();
+    if(e.key==='F12') logDevtools('F12');
+    else if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='I'||k==='J'||k==='C')) logDevtools('Ctrl+Shift+'+k);
+    else if((e.ctrlKey||e.metaKey)&&k==='U') logDevtools('ViewSource');
+  },true);
+  // Heuristic: devtools panel open (docked) — window chrome much larger than viewport
+  setInterval(function(){
+    if((window.outerWidth-window.innerWidth>200)||(window.outerHeight-window.innerHeight>200)){
+      logDevtools('PanelOpen');
+    }
+  },4000);
+
+  // ── PWA install ──
+  var deferredPrompt=null;
+  window.addEventListener('beforeinstallprompt',function(e){ e.preventDefault(); deferredPrompt=e; });
+  window.downloadApp=function(){
+    if(db) db.ref('analytics/installs').push({deviceId:DID,ts:Date.now()}).catch(function(){});
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.finally(function(){deferredPrompt=null;});
+      return;
+    }
+    // Fallback instructions (iOS Safari / browsers without the prompt)
+    var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    var el=document.createElement('div');
+    el.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(4,6,15,0.94);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;padding:22px';
+    el.innerHTML='<div style="max-width:360px;background:#0d1628;border:1px solid rgba(255,255,255,0.14);border-radius:24px;padding:28px 22px;text-align:center;font-family:inherit">'
+      +'<div style="font-size:2.4rem;margin-bottom:10px">📲</div>'
+      +'<h3 style="margin:0 0 10px;color:#fff">Add Lumiq to your Home Screen</h3>'
+      +'<p style="font-size:0.85rem;color:rgba(255,255,255,0.55);line-height:1.7;margin:0 0 18px">'
+      +(isIOS
+        ? 'Tap the <strong>Share</strong> button <span style="border:1px solid rgba(255,255,255,0.3);border-radius:6px;padding:1px 7px">⬆︎</span> at the bottom of Safari, then choose <strong>“Add to Home Screen”</strong>.'
+        : 'Tap the <strong>⋮ menu</strong> in your browser (top-right), then choose <strong>“Add to Home screen”</strong> or <strong>“Install app”</strong>.')
+      +'</p>'
+      +'<a href="app.html" style="display:block;padding:13px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;font-weight:800;text-decoration:none;margin-bottom:8px">Or open the app now →</a>'
+      +'<button onclick="this.closest(\'div\').parentNode.remove()" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:0.8rem;cursor:pointer;padding:8px">Close</button></div>';
+    el.onclick=function(e2){if(e2.target===el)el.remove()};
+    document.body.appendChild(el);
+  };
+
+  authed(function(){ enforceBlock(); trackVisit(); });
+})();
+</script>
 </body>
 </html>
